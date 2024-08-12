@@ -193,11 +193,11 @@ def tuning_example() -> None:
         log.info(f"Optimal parameters for {method}:")
         log.info(params)
 
-    detected_breakouts, _ = cumsum_breakout_detection(ts1_np)
-    log.info(f"Wavelet detected breakouts (NumPy array): {detected_breakouts}")
-    detected_breakouts, _ = cumsum_breakout_detection(ts1_np, **optimal_params["cumsum"])
+    detected_breakouts, _ = cumsum_breakout_detection_online(ts1_np)
+    log.info(f"CUMSUM detected breakouts (NumPy array): {detected_breakouts}")
+    detected_breakouts, _ = cumsum_breakout_detection_online(ts1_np, **optimal_params["cumsum"])
     plot_timeseries_with_breakouts(ts1, detected_breakouts, "cumsum")
-    log.info(f"Wavelet detected breakouts (NumPy array): {detected_breakouts}")
+    log.info(f"CUMSUM detected breakouts (NumPy array): {detected_breakouts}")
     plot_timeseries_with_breakouts(ts1, detected_breakouts, "cumsum_tuned")
 
 

@@ -18,9 +18,10 @@ def generate_timeseries_with_breakouts(
     breakout_max: float = 2.0,
     start_date: str = "2020-01-01",
     random_seed: int | None = None,
+    smoothing_window: int = 10
 ) -> tuple[pd.DataFrame, list[int]]:
     """
-    Generate a time series with specified breakout points.
+    Generate a time series with specified breakout points, smoothed over a window.
 
     Parameters:
     - n_points (int): Total number of points in the time series
@@ -34,6 +35,7 @@ def generate_timeseries_with_breakouts(
     - breakout_max (float): Maximum magnitude of breakouts
     - start_date (str): Start date for the time series in 'YYYY-MM-DD' format
     - random_seed (int, optional): Seed for random number generation
+    - smoothing_window (int): Number of points over which to smooth the breakpoint transition
 
     Returns:
     - pd.DataFrame: A dataframe with 'date' and 'value' columns
@@ -47,13 +49,14 @@ def generate_timeseries_with_breakouts(
         or noise_level < 0
         or breakout_min < 0
         or breakout_max < breakout_min
+        or smoothing_window < 1
     ):
         raise ValueError("Invalid input parameters")
 
     if random_seed is not None:
         np.random.seed(random_seed)
 
-    log.info("Generating time series with breakouts")
+    log.info("Generating time series with smoothed breakouts")
 
     # Generate base time series with trend
     x = np.arange(n_points)
@@ -67,16 +70,22 @@ def generate_timeseries_with_breakouts(
             f"Added seasonal component with period {seasonal_period} and amplitude {seasonal_amplitude}"
         )
 
-    # Introduce breakout points
-    breakout_indices = np.sort(np.random.choice(n_points, n_breakouts, replace=False))
+    # Introduce smoothed breakout points
+    breakout_indices = np.sort(np.random.choice(n_points - smoothing_window, n_breakouts, replace=False))
     for idx in breakout_indices:
         # Randomly choose direction and magnitude of breakout
         breakout = np.random.choice([-1, 1]) * np.random.uniform(
             breakout_min, breakout_max
         )
-        y[idx:] += breakout
+        
+        # Create a smoothing window
+        smoothing = np.linspace(0, 1, smoothing_window)
+        
+        # Apply the smoothed breakout
+        y[idx:idx+smoothing_window] += breakout * smoothing
+        y[idx+smoothing_window:] += breakout
 
-    log.info(f"Introduced {n_breakouts} breakouts at indices: {breakout_indices}")
+    log.info(f"Introduced {n_breakouts} smoothed breakouts at indices: {breakout_indices}")
 
     # Create DataFrame
     try:
